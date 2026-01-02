@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ipsa - To do list</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css?v=18">
+
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    
+    <!-- Utilities -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- Global Error Handler -->
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            const errDiv = document.createElement('div');
+            errDiv.style.position = 'fixed';
+            errDiv.style.top = '0';
+            errDiv.style.left = '0';
+            errDiv.style.width = '100%';
+            errDiv.style.background = '#ff4b4b';
+            errDiv.style.color = 'white';
+            errDiv.style.padding = '10px';
+            errDiv.style.zIndex = '9999';
+            errDiv.innerHTML = `<strong>Error:</strong> ${msg} <br> <small>${url}:${line}</small>`;
+            document.body.appendChild(errDiv);
+            
+            // Force show auth screen if loader is stuck
+            const loader = document.getElementById('loader');
+            if(loader) loader.style.display = 'none';
+            const auth = document.getElementById('auth-screen');
+            if(auth) {
+                auth.style.display = 'flex';
+                auth.style.opacity = '1';
+                auth.classList.remove('hidden');
+                auth.classList.add('active');
+            }
+        };
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- Loader -->
+        <div id="loader" class="screen active">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Auth Screen -->
+        <div id="auth-screen" class="screen hidden">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h1>Ipsa</h1>
+                    <p>Organize your life, simply.</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button id="tab-login" class="auth-tab active">Sign In</button>
+                    <button id="tab-signup" class="auth-tab">Sign Up</button>
+                </div>
+                
+                <form id="login-form" class="auth-form active">
+                    <div class="input-group">
+                        <ion-icon name="mail-outline"></ion-icon>
+                        <input type="email" id="login-email" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                        <input type="password" id="login-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="primary-btn">Sign In <ion-icon name="arrow-forward-outline"></ion-icon></button>
+                </form>
+
+                <form id="signup-form" class="auth-form hidden">
+                    <div class="input-group">
+                        <ion-icon name="mail-outline"></ion-icon>
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                        <input type="password" id="signup-password" placeholder="Create Password" required>
+                    </div>
+                    <button type="submit" class="primary-btn">Create Account <ion-icon name="person-add-outline"></ion-icon></button>
+                </form>
+                
+                <p id="auth-message" class="message"></p>
+            </div>
+        </div>
+
+        <!-- Profile Creation Screen -->
+        <div id="profile-screen" class="screen hidden">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2>Welcome!</h2>
+                    <p>Let's get to know you.</p>
+                </div>
+                
+                <form id="profile-form">
+                    <div class="form-row">
+                        <div class="input-group no-icon">
+                            <label>First Name</label>
+                            <input type="text" id="first-name" required>
+                        </div>
+                        <div class="input-group no-icon">
+                            <label>Last Name</label>
+                            <input type="text" id="last-name" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group no-icon">
+                        <label>Gender</label>
+                        <div class="radio-group">
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="male" required>
+                                <span>Male</span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="female">
+                                <span>Female</span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="other">
+                                <span>Other</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group no-icon">
+                            <label>Date of Birth</label>
+                            <input type="date" id="dob" required>
+                        </div>
+                        <div class="input-group no-icon">
+                            <label>Location</label>
+                            <input type="text" id="location" placeholder="City, Country" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn">Complete Profile <ion-icon name="checkmark-circle-outline"></ion-icon></button>
+                </form>
+                <p id="profile-message" class="message"></p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Screen -->
+        <div id="dashboard-screen" class="screen hidden">
+            <nav class="sidebar">
+                <div class="user-profile-summary">
+                    <div class="avatar" id="nav-avatar">?</div>
+                    <div class="user-info">
+                        <h3 id="nav-name">User</h3>
+                        <p id="nav-location">Location</p>
+                    </div>
+                </div>
+                
+                <ul class="nav-links">
+                    <li class="active" data-view="tasks">
+                        <ion-icon name="list-outline"></ion-icon> Tasks
+                    </li>
+                    <li data-view="stats">
+                        <ion-icon name="stats-chart-outline"></ion-icon> Insights
+                    </li>
+                    <li id="logout-btn">
+                        <ion-icon name="log-out-outline"></ion-icon> Sign Out
+                    </li>
+                </ul>
+            </nav>
+
+            <main class="content-area">
+                <header class="top-bar">
+                    <div class="greeting">
+                        <h1 id="greeting-text">Hello, User</h1>
+                        <p id="date-display">Today</p>
+                    </div>
+                    <button id="theme-toggle" class="icon-btn"><ion-icon name="moon-outline"></ion-icon></button>
+                </header>
+
+                <!-- Tasks View -->
+                <div id="view-tasks" class="view active">
+                    <div class="add-task-wrapper">
+                        <div class="input-row">
+                            <input type="text" id="new-task-input" placeholder="Add a new task..." autocomplete="off">
+                            <input type="time" id="new-task-time" aria-label="Task time">
+                        </div>
+                        <button id="add-task-btn"><ion-icon name="add-outline"></ion-icon></button>
+                    </div>
+
+                    <div class="task-filters">
+                        <button class="filter-chip active" data-filter="all">All</button>
+                        <button class="filter-chip" data-filter="active">Pending</button>
+                        <button class="filter-chip" data-filter="completed">Done</button>
+                    </div>
+
+                    <ul id="task-list" class="task-list">
+                        <!-- Tasks go here -->
+                    </ul>
+                    <div id="empty-state" class="empty-state hidden">
+                        <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" alt="No tasks" width="100">
+                        <p>No tasks found. Start by adding one!</p>
+                    </div>
+                </div>
+
+                <!-- Stats View -->
+                <div id="view-stats" class="view hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="icon-box fire"><ion-icon name="flame"></ion-icon></div>
+                            <h3>Current Streak</h3>
+                            <p id="stat-streak">0 Days</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box check"><ion-icon name="checkmark-done"></ion-icon></div>
+                            <h3>Total Completed</h3>
+                            <p id="stat-total">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box chart"><ion-icon name="pie-chart"></ion-icon></div>
+                            <h3>Completion Rate</h3>
+                            <p id="stat-rate">0%</p>
+                        </div>
+                    </div>
+                    <!-- Could add charts here later -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="supabase-client.js?v=17"></script>
+    <script src="app.js?v=18"></script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            // NUCLEAR FIX: Unregister existing workers to force update and clear broken cache
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            }).then(function() {
+                // Register the new worker
+                navigator.serviceWorker.register("./sw.js");
+            });
+        }
+    </script>
+</body>
+</html>
