@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ipsa - To Do List</title>
+    <meta name="description" content="Ipsa — a beautiful, smart to-do list app. Organize your day, build streaks, and get things done.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css?v=19">
+
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+    <!-- Utilities -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Loader -->
+        <div id="loader" class="screen active">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Main Dashboard Screen -->
+        <div id="dashboard-screen" class="screen hidden">
+            <nav class="sidebar">
+                <div class="user-profile-summary">
+                    <div class="avatar" id="nav-avatar">U</div>
+                    <div class="user-info">
+                        <h3 id="nav-name">User</h3>
+                        <p id="nav-location"></p>
+                    </div>
+                </div>
+
+                <ul class="nav-links">
+                    <li class="active" data-view="tasks">
+                        <ion-icon name="list-outline"></ion-icon> Tasks
+                    </li>
+                    <li data-view="stats">
+                        <ion-icon name="stats-chart-outline"></ion-icon> Insights
+                    </li>
+                    <li id="edit-profile-btn">
+                        <ion-icon name="person-outline"></ion-icon> Edit Profile
+                    </li>
+                </ul>
+            </nav>
+
+            <main class="content-area">
+                <header class="top-bar">
+                    <div class="greeting">
+                        <h1 id="greeting-text">Hello, User</h1>
+                        <p id="date-display">Today</p>
+                    </div>
+                    <button id="theme-toggle" class="icon-btn"><ion-icon name="moon-outline"></ion-icon></button>
+                </header>
+
+                <!-- Tasks View -->
+                <div id="view-tasks" class="view active">
+                    <div class="add-task-wrapper">
+                        <div class="input-row">
+                            <input type="text" id="new-task-input" placeholder="Add a new task..." autocomplete="off">
+                            <input type="time" id="new-task-time" aria-label="Task time">
+                        </div>
+                        <button id="add-task-btn"><ion-icon name="add-outline"></ion-icon></button>
+                    </div>
+
+                    <div class="task-filters">
+                        <button class="filter-chip active" data-filter="all">All</button>
+                        <button class="filter-chip" data-filter="active">Pending</button>
+                        <button class="filter-chip" data-filter="completed">Done</button>
+                    </div>
+
+                    <ul id="task-list" class="task-list"></ul>
+                    <div id="empty-state" class="empty-state hidden">
+                        <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" alt="No tasks" width="100">
+                        <p>No tasks found. Start by adding one!</p>
+                    </div>
+                </div>
+
+                <!-- Stats View -->
+                <div id="view-stats" class="view hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="icon-box fire"><ion-icon name="flame"></ion-icon></div>
+                            <h3>Current Streak</h3>
+                            <p id="stat-streak">0 Days</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box trophy"><ion-icon name="trophy"></ion-icon></div>
+                            <h3>Longest Streak</h3>
+                            <p id="stat-longest-streak">0 Days</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box check"><ion-icon name="checkmark-done"></ion-icon></div>
+                            <h3>Today Completed</h3>
+                            <p id="stat-total">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box chart"><ion-icon name="pie-chart"></ion-icon></div>
+                            <h3>Completion Rate</h3>
+                            <p id="stat-rate">0%</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="icon-box star"><ion-icon name="star"></ion-icon></div>
+                            <h3>All-Time Completed</h3>
+                            <p id="stat-all-time">0</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Profile Edit Modal -->
+        <div id="profile-modal" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Edit Profile</h2>
+                    <button id="close-profile-modal" class="icon-btn"><ion-icon name="close-outline"></ion-icon></button>
+                </div>
+                <form id="profile-form">
+                    <div class="form-row">
+                        <div class="input-group no-icon">
+                            <label>First Name</label>
+                            <input type="text" id="edit-first-name" placeholder="First name" required>
+                        </div>
+                        <div class="input-group no-icon">
+                            <label>Last Name</label>
+                            <input type="text" id="edit-last-name" placeholder="Last name">
+                        </div>
+                    </div>
+
+                    <div class="input-group no-icon">
+                        <label>Gender</label>
+                        <div class="radio-group">
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="male">
+                                <span>Male</span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="female">
+                                <span>Female</span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="gender" value="other">
+                                <span>Other</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group no-icon">
+                            <label>Date of Birth</label>
+                            <input type="date" id="edit-dob">
+                        </div>
+                        <div class="input-group no-icon">
+                            <label>Location</label>
+                            <input type="text" id="edit-location" placeholder="City, Country">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn">Save Profile <ion-icon name="checkmark-circle-outline"></ion-icon></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="supabase-client.js?v=19"></script>
+    <script src="app.js?v=19"></script>
+
+    <script>
+        // Only run Service Worker and PWA features on an actual web server, not file://
+        if (window.location.protocol !== 'file:') {
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) { registration.unregister(); }
+                }).then(function() {
+                    navigator.serviceWorker.register("./sw.js");
+                });
+            }
+            
+            // Dynamically add manifest to avoid file:// CORS errors
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = './manifest.json';
+            document.head.appendChild(manifestLink);
+        } else {
+            console.warn('Running from file:// protocol. PWA features (manifest, service worker) are disabled to prevent CORS errors.');
+        }
+    </script>
+</body>
+</html>

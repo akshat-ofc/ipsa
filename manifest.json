@@ -1,0 +1,21 @@
+{
+  "name": "Ipsa - To Do List",
+  "short_name": "Ipsa",
+  "start_url": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "background_color": "#ffffff",
+  "theme_color": "#58cc02",
+  "icons": [
+    {
+      "src": "./ipsalogo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./ipsalogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
